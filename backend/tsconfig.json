@@ -1,0 +1,35 @@
+{
+  "compilerOptions": {
+    // File Layout
+    "rootDir": "./src",
+    "outDir": "dist",
+
+    // Environment Settings
+    "module": "CommonJS",           // Node.js default
+    "target": "ES2020",             // Good modern target for Node 18+
+    "lib": ["ES2020"],              // Include ES2020 built-ins
+    "types": ["node"],              // Node type definitions
+
+    // Other Outputs
+    "sourceMap": true,
+    "declaration": true,
+    "declarationMap": true,
+
+    // Stricter Typechecking Options
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    "strict": true,
+
+    // Style Options
+    "noImplicitReturns": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+
+    // Module resolution
+    "esModuleInterop": true,
+  "moduleResolution": "node",
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true
+  }
+}
