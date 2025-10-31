@@ -31,6 +31,12 @@ tsconfig.tsbuildinfo
 .env.production
 .env.test
 .env*.local
+.env.*
+frontend/.env
+frontend/.env.*
+backend/.env
+backend/.env.*
+
 
 # === Supabase ===
 .supabase/
