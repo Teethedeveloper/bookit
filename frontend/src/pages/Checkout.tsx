@@ -1,6 +1,6 @@
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { API_ENDPOINTS } from "@/config/api";
 import { useState } from "react";
 import { toast } from "sonner";
 import { MapPin, Clock, Calendar, Tag, ArrowLeft } from "lucide-react";
@@ -36,13 +36,9 @@ const Checkout = () => {
   const { data: experience } = useQuery<Tables<"experiences"> | undefined>({
     queryKey: ["experience", experienceId],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("experiences")
-        .select("*")
-        .eq("id", experienceId)
-        .single();
-      if (error) throw error;
-      return data ?? undefined;
+      const res = await fetch(`${API_ENDPOINTS.experiences}/${experienceId}`);
+      if (!res.ok) throw new Error(`Failed to load experience: ${res.statusText}`);
+      return (await res.json()) ?? undefined;
     },
     enabled: !!experienceId,
   });
@@ -50,27 +46,26 @@ const Checkout = () => {
   const { data: slot } = useQuery<Tables<"slots"> | undefined>({
     queryKey: ["slot", slotId],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("slots")
-        .select("*")
-        .eq("id", slotId)
-        .single();
-      if (error) throw error;
-      return data ?? undefined;
+      const res = await fetch(`${API_ENDPOINTS.experiences}/${experienceId}/slots`);
+      if (!res.ok) throw new Error(`Failed to load slots: ${res.statusText}`);
+      const slots = (await res.json()) as Tables<"slots">[];
+      return slots.find((s) => s.id === slotId) ?? undefined;
     },
     enabled: !!slotId,
   });
 
   const applyPromoMutation = useMutation<Tables<"promo_codes">, Error, string>({
     mutationFn: async (code: string) => {
-      const { data, error } = await supabase
-        .from("promo_codes")
-        .select("*")
-        .eq("code", code.toUpperCase())
-        .eq("active", true)
-        .single();
-      if (error) throw error;
-      return data;
+      const res = await fetch(`${API_ENDPOINTS.promo}/validate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: code.toUpperCase() }),
+      });
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(text || "Promo validation failed");
+      }
+      return (await res.json()) as Tables<"promo_codes">;
     },
     onSuccess: (data) => {
       setDiscount({ type: data.discount_type, value: Number(data.discount_value) });
@@ -96,9 +91,13 @@ const Checkout = () => {
 
       const totalPrice = basePrice - discountAmount;
 
-      const { data, error } = await supabase
-        .from("bookings")
-        .insert({
+      const res = await fetch(API_ENDPOINTS.bookings, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        // Include credentials so the browser accepts any Set-Cookie header from the backend
+        // (backend enables credentials in CORS). This is safe for non-sensitive booking id cookie.
+        credentials: "include",
+        body: JSON.stringify({
           experience_id: experienceId,
           slot_id: slotId,
           user_name: formData.name,
@@ -108,12 +107,14 @@ const Checkout = () => {
           promo_code: promoApplied ? formData.promoCode.toUpperCase() : null,
           discount_amount: discountAmount,
           total_price: totalPrice,
-        })
-        .select()
-        .single();
+        }),
+      });
 
-      if (error) throw error;
-      return data;
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(text || "Booking failed");
+      }
+      return (await res.json()) as Tables<"bookings">;
     },
     onSuccess: (data) => {
       navigate(`/result?bookingId=${data.id}`);

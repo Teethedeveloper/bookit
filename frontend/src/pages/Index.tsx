@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { API_ENDPOINTS } from "@/config/api";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -15,12 +15,11 @@ const Index = () => {
   const { data: experiences, isLoading } = useQuery({
     queryKey: ["experiences"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("experiences")
-        .select("*")
-        .order("rating", { ascending: false });
-      if (error) throw error;
-      return data;
+      const res = await fetch(API_ENDPOINTS.experiences);
+      if (!res.ok) {
+        throw new Error(`Failed to load experiences: ${res.statusText}`);
+      }
+      return res.json();
     },
   });
 

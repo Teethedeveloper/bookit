@@ -110,6 +110,12 @@ VITE_SUPABASE_ANON_KEY=<your-supabase-key>
 PORT=5000
 ```
 
+### Secrets and safety (important)
+
+- Never commit real API keys, service_role keys, or other secrets into the repository. Use your deployment platform's secret store (Render/Netlify/Vercel) or a local `.env` that is gitignored.
+- The backend uses a server-side Supabase key (recommended) for database operations. Set `SUPABASE_KEY` (service_role) in your deployment environment variables — do not expose this key in the frontend.
+- Example env files have been added as `.env.example` in the `frontend/` and `backend/` folders.
+
 ### 4. Run the app
 #### Backend
 ```bash

@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { API_ENDPOINTS } from "@/config/api";
 import { Tables } from "@/integrations/supabase/types";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
@@ -19,13 +19,9 @@ const ExperienceDetails: React.FC = () => {
   const { data: experience, isLoading: expLoading } = useQuery({
     queryKey: ["experience", id],
     queryFn: async (): Promise<Experience | null> => {
-      const { data, error } = await supabase
-        .from("experiences")
-        .select("*")
-        .eq("id", id)
-        .single();
-      if (error) throw error;
-      return data as Experience;
+      const res = await fetch(`${API_ENDPOINTS.experiences}/${id}`);
+      if (!res.ok) throw new Error(`Failed to load experience: ${res.statusText}`);
+      return (await res.json()) as Experience;
     },
     enabled: !!id,
   });
@@ -33,14 +29,9 @@ const ExperienceDetails: React.FC = () => {
   const { data: slots, isLoading: slotsLoading } = useQuery({
     queryKey: ["slots", id],
     queryFn: async (): Promise<Slot[] | null> => {
-      const { data, error } = await supabase
-        .from("slots")
-        .select("*")
-        .eq("experience_id", id)
-        .order("date", { ascending: true })
-        .order("time", { ascending: true });
-      if (error) throw error;
-      return data as Slot[];
+      const res = await fetch(`${API_ENDPOINTS.experiences}/${id}/slots`);
+      if (!res.ok) throw new Error(`Failed to load slots: ${res.statusText}`);
+      return (await res.json()) as Slot[];
     },
     enabled: !!id,
   });
